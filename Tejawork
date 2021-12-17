@@ -1,0 +1,27 @@
+val cLevel = List("C")
+val blevel = List("D")
+
+import org.apache.spark.sql.functions._
+def calBusinessUdf = udf((setl_type: String) => setlType match {
+  case x if(cLevel.exists(_.contains(x)) || cLevel.exists(x.contains(_))) => "CALENDER"
+  case x if(bLevel.exists(_.contains(x)) || bLevel.exists(x.contains(_))) => "BUSINESS"
+})
+
+def daysMonUdf = udf((setl_type: String) => setlType match {
+  when(col("days_in_month-num").subStr(0,2).isDigit==True)=>col("days_in_month-num").subStr(0,2)).otherwise(col("days_in_month-num").subStr(0,1).isDigit==True)=>col("days_in_month-num").subStr(0,1))
+
+})
+
+def MonthOffsetUdf = udf((temp: String) => temp match {
+  when(col("temp").subStr(0,1).isDigit==True)=>col("temp").subStr(0,1))
+
+
+
+df.withColumn("calender_or_business_day_cd", calBusinessUdf(col("setl_type"))).show(false)
+
+df.withColumn("days_in_month-num", daysMonUdf(col("setl_type"))).show(false)
+
+
+df.withColumn("temp",split(col("setl_type"),">").getItem(1))
+
+df.withColumn("month_offset",MonthOffsetUdf(col("temp"))).show(false)
